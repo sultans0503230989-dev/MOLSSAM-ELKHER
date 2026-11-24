@@ -6,9 +6,11 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <application
         android:label="صلوات الفتوحات"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/logo"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity android:name=".MainActivity" android:exported="true">
@@ -24,6 +26,14 @@
             android:taskAffinity=""
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+        <service
+            android:name=".KeepService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="prayer_reminder"/>
+        </service>
         <receiver android:name=".ReminderReceiver" android:exported="false"/>
         <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter>

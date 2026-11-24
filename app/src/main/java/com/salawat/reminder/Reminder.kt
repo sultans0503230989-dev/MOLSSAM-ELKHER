@@ -24,12 +24,20 @@ object Scheduler {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
+    fun keep(c: Context, on: Boolean) {
+        try {
+            val i = Intent(c, KeepService::class.java)
+            if (on) c.startForegroundService(i) else c.stopService(i)
+        } catch (e: Exception) {}
+    }
+
     fun start(c: Context, mins: Double, order: String, json: String, speak: Boolean) {
         File(c.filesDir, "d.json").writeText(json)
         c.getSharedPreferences(PREFS, 0).edit()
             .putLong("ms", (mins * 60000).toLong()).putString("order", order)
             .putInt("idx", 0).putBoolean("on", true).putBoolean("spk", speak).apply()
         schedule(c)
+        keep(c, true)
     }
 
     fun schedule(c: Context) {
@@ -46,6 +54,7 @@ object Scheduler {
     fun stop(c: Context) {
         c.getSystemService(AlarmManager::class.java).cancel(pi(c))
         c.getSharedPreferences(PREFS, 0).edit().putBoolean("on", false).apply()
+        keep(c, false)
     }
 }
 
@@ -77,6 +86,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val text = item.getString(1)
         val note = android.app.Notification.Builder(c, "salawat")
             .setSmallIcon(R.drawable.ic_notif)
+            .setLargeIcon(android.graphics.BitmapFactory.decodeResource(c.resources, R.drawable.logo))
             .setContentTitle(item.getString(0))
             .setContentText(text)
             .setStyle(android.app.Notification.BigTextStyle().bigText(text))
@@ -107,6 +117,9 @@ class ReminderReceiver : BroadcastReceiver() {
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(c: Context, i: Intent) {
-        if (c.getSharedPreferences(Scheduler.PREFS, 0).getBoolean("on", false)) Scheduler.schedule(c)
+        if (c.getSharedPreferences(Scheduler.PREFS, 0).getBoolean("on", false)) {
+            Scheduler.schedule(c)
+            Scheduler.keep(c, true)
+        }
     }
 }
