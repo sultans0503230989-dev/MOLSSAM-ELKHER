@@ -50,6 +50,7 @@ border-top:2px solid #c9a54a;color:#d9f0b8;font-size:13px;font-weight:600;text-a
 #ov.on{display:flex}
 #ov .post{max-height:78vh;width:auto;height:78vh;max-width:92vw}
 #ov .btn{max-width:300px}
+.cardmode{background:transparent}.cardmode .top,.cardmode .panel,.cardmode .list{display:none}
 </style>
 </head>
 <body>
@@ -63,6 +64,7 @@ border-top:2px solid #c9a54a;color:#d9f0b8;font-size:13px;font-weight:600;text-a
   <div class="row"><label for="order">الترتيب</label><select id="order"><option value="seq">بالتسلسل</option><option value="rnd">عشوائي</option></select></div>
   <div class="row"><label class="chk"><input type="checkbox" id="snd" checked> صوت تنبيه</label><label class="chk"><input type="checkbox" id="vib" checked> اهتزاز</label><label class="chk"><input type="checkbox" id="wake"> إبقاء الشاشة مفتوحة</label><label class="chk"><input type="checkbox" id="ntf"> إشعار على الموبايل</label><label class="chk"><input type="checkbox" id="spk" checked> صوت الصلاة على النبي ﷺ</label></div>
   <button class="btn" id="go">ابدأ التذكير</button>
+  <button class="btn" id="perm" style="display:none;margin-top:8px;background:#5b6f5e">السماح بظهور البطاقة فوق الشاشة</button>
   <div id="status">اختر المدة ثم اضغط ابدأ</div>
 </div>
 
@@ -188,8 +190,10 @@ async function start(){const m=getMin();if(!m){$("status").textContent="اكتب
  $("go").textContent="إيقاف التذكير";$("go").classList.add("stop")}
 function stop(){try{window.Android&&Android.stop()}catch(e){}clearInterval(timer);clearInterval(tick);timer=null;try{wl&&wl.release()}catch(e){}wl=null;$("go").textContent="ابدأ التذكير";$("go").classList.remove("stop");$("status").textContent="تم الإيقاف"}
 $("go").onclick=()=>timer?stop():start();
-if(window.Android){$("ntf").parentElement.style.display="none"}
-$("close").onclick=()=>$("ov").classList.remove("on");
+const CARD=new URLSearchParams(location.search).get("card");
+if(window.Android){$("ntf").parentElement.style.display="none";$("perm").style.display="";$("perm").onclick=()=>{try{Android.permissions()}catch(e){}}}
+if(CARD!==null&&D[+CARD]){const k=+CARD;document.body.classList.add("cardmode");$("ovpost").innerHTML=post(D[k][0],D[k][1]);$("ov").classList.add("on");fit($("ovpost"))}
+$("close").onclick=()=>{$("ov").classList.remove("on");if(CARD!==null&&window.Android&&Android.close)Android.close()};
 </script>
 </body>
 </html>

@@ -4,7 +4,10 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -32,6 +35,22 @@ class MainActivity : Activity() {
     override fun onResume() { super.onResume(); foreground = true }
     override fun onPause() { foreground = false; super.onPause() }
 
+    private fun openPermissions() {
+        try {
+            startActivity(
+                Intent("miui.intent.action.APP_PERM_EDITOR")
+                    .setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
+                    .putExtra("extra_pkgname", packageName)
+            )
+        } catch (e: Exception) {
+            try {
+                startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+            } catch (e2: Exception) {
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+            }
+        }
+    }
+
     private fun playSalawat() {
         try {
             mp?.release()
@@ -41,8 +60,15 @@ class MainActivity : Activity() {
     }
 
     inner class Bridge {
-        @JavascriptInterface fun start(mins: Double, order: String, json: String, speak: Boolean) =
+        @JavascriptInterface fun start(mins: Double, order: String, json: String, speak: Boolean) {
             Scheduler.start(applicationContext, mins, order, json, speak)
+            val p = getSharedPreferences(Scheduler.PREFS, 0)
+            if (!Settings.canDrawOverlays(this@MainActivity) && !p.getBoolean("askedOverlay", false)) {
+                p.edit().putBoolean("askedOverlay", true).apply()
+                runOnUiThread { openPermissions() }
+            }
+        }
+        @JavascriptInterface fun permissions() { runOnUiThread { openPermissions() } }
         @JavascriptInterface fun stop() = Scheduler.stop(applicationContext)
         @JavascriptInterface fun speak() { runOnUiThread { playSalawat() } }
     }

@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Build
+import android.provider.Settings
 import android.os.Handler
 import android.os.Looper
 import org.json.JSONArray
@@ -66,8 +67,11 @@ class ReminderReceiver : BroadcastReceiver() {
         nm.createNotificationChannel(
             NotificationChannel("salawat", "تذكير الصلاة على النبي", NotificationManager.IMPORTANCE_HIGH)
         )
+        val cardIntent = Intent(c, CardActivity::class.java)
+            .putExtra("k", k)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val open = PendingIntent.getActivity(
-            c, 0, Intent(c, MainActivity::class.java),
+            c, k + 1, cardIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val text = item.getString(1)
@@ -77,9 +81,13 @@ class ReminderReceiver : BroadcastReceiver() {
             .setContentText(text)
             .setStyle(android.app.Notification.BigTextStyle().bigText(text))
             .setContentIntent(open)
+            .setFullScreenIntent(open, true)
             .setAutoCancel(true)
             .build()
         nm.notify(1, note)
+        if (Settings.canDrawOverlays(c)) {
+            try { c.startActivity(cardIntent) } catch (e: Exception) {}
+        }
         if (p.getBoolean("spk", true)) play(c, goAsync())
     }
 
